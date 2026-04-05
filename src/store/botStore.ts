@@ -123,7 +123,7 @@ interface BotStore {
   };
 }
 
-const DEFAULT_GROUP_NAMES = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Foxtrot', 'Golf', 'Hotel', 'India', 'Juliet'];
+const DEFAULT_GROUP_NAMES = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo'];
 
 const SKILLS = [
   'web-scraping',
@@ -376,10 +376,10 @@ export const useBotStore = create<BotStore>((set, get) => ({
       // First initialization if DB is empty
       const allBots: Bot[] = [];
       const groups = DEFAULT_GROUP_NAMES.map((name, index) =>
-        createGroupRecord(name, index, 'heavy', SPECIALIZATIONS[index % SPECIALIZATIONS.length], `Grupo de operaciones ${name}`, allBots),
+        createGroupRecord(name, index, 'balanced', SPECIALIZATIONS[index % SPECIALIZATIONS.length], `Grupo de operaciones ${name}`, allBots),
       );
 
-      // Save to Supabase
+      // Save Groups
       await supabase.from('groups').insert(groups.map(g => ({
         id: g.id,
         name: g.name,
@@ -393,21 +393,27 @@ export const useBotStore = create<BotStore>((set, get) => ({
         focus: g.focus
       })));
 
-      await supabase.from('bots').insert(allBots.map(b => ({
-        id: b.id,
-        name: b.name,
-        rank: b.rank,
-        group_id: b.groupId,
-        group_name: b.groupName,
-        parent_id: b.parentId,
-        status: b.status,
-        current_task: b.currentTask,
-        completed_tasks: b.completedTasks,
-        failed_tasks: b.failedTasks,
-        efficiency: b.efficiency,
-        specialization: b.specialization,
-        skills: b.skills
-      })));
+      // Save Bots in batches (max 500 per request)
+      const BATCH_SIZE = 500;
+      for (let i = 0; i < allBots.length; i += BATCH_SIZE) {
+        const batch = allBots.slice(i, i + BATCH_SIZE);
+        await supabase.from('bots').insert(batch.map(b => ({
+          id: b.id,
+          name: b.name,
+          rank: b.rank,
+          group_id: b.groupId,
+          group_name: b.groupName,
+          parent_id: b.parentId,
+          status: b.status,
+          current_task: b.currentTask,
+          completed_tasks: b.completedTasks,
+          failed_tasks: b.failedTasks,
+          efficiency: b.efficiency,
+          specialization: b.specialization,
+          skills: b.skills,
+          last_active: b.lastActive.toISOString()
+        })));
+      }
 
       set({ bots: allBots, groups });
     } catch (err) {

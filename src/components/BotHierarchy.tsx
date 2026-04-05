@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
+  ChevronDown,
+  ChevronUp,
   Layers3,
   Search,
-  ShieldCheck,
   UserRound,
   Users,
   Workflow,
@@ -28,81 +29,113 @@ const rankOrder: Record<BotRank, number> = {
   soldado: 4,
 };
 
-const rankTone: Record<BotRank, { label: string; badge: string; line: string }> = {
+const rankTone: Record<BotRank, { label: string; badge: string; gradient: string }> = {
   capitan: {
-    label: 'Capitan',
-    badge: 'border-violet-400/20 bg-violet-400/8 text-violet-100',
-    line: 'border-violet-400/35',
+    label: 'CAP',
+    badge: 'bg-gradient-to-r from-violet-400 to-purple-500 text-white',
+    gradient: 'from-violet-400 to-purple-500',
   },
   teniente: {
-    label: 'Teniente',
-    badge: 'border-cyan-400/20 bg-cyan-400/8 text-cyan-100',
-    line: 'border-cyan-400/35',
+    label: 'TEN',
+    badge: 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white',
+    gradient: 'from-cyan-400 to-blue-500',
   },
   alferez: {
-    label: 'Alferez',
-    badge: 'border-blue-400/20 bg-blue-400/8 text-blue-100',
-    line: 'border-blue-400/35',
+    label: 'ALF',
+    badge: 'bg-gradient-to-r from-blue-400 to-indigo-500 text-white',
+    gradient: 'from-blue-400 to-indigo-500',
   },
   sargento: {
-    label: 'Sargento',
-    badge: 'border-emerald-400/20 bg-emerald-400/8 text-emerald-100',
-    line: 'border-emerald-400/35',
+    label: 'SGT',
+    badge: 'bg-gradient-to-r from-emerald-400 to-green-500 text-white',
+    gradient: 'from-emerald-400 to-green-500',
   },
   soldado: {
-    label: 'Soldado',
-    badge: 'border-slate-400/20 bg-slate-400/8 text-slate-100',
-    line: 'border-slate-400/35',
+    label: 'SLD',
+    badge: 'bg-white/10 text-slate-400',
+    gradient: 'from-slate-400 to-slate-500',
   },
 };
 
-const statusTone: Record<BotStatus, string> = {
-  idle: 'border-slate-400/20 bg-slate-400/8 text-slate-200',
-  working: 'border-cyan-400/20 bg-cyan-400/8 text-cyan-100',
-  completed: 'border-emerald-400/20 bg-emerald-400/8 text-emerald-100',
-  failed: 'border-rose-400/20 bg-rose-400/8 text-rose-100',
-  paused: 'border-amber-400/20 bg-amber-400/8 text-amber-100',
+const statusTone: Record<BotStatus, { label: string; dot: string }> = {
+  idle: { label: 'IDL', dot: 'bg-slate-400' },
+  working: { label: 'WRK', dot: 'bg-cyan-400' },
+  completed: { label: 'DON', dot: 'bg-emerald-400' },
+  failed: { label: 'ERR', dot: 'bg-rose-400' },
+  paused: { label: 'PAU', dot: 'bg-amber-400' },
 };
 
 const OfficerTree = ({ nodes, depth = 0 }: { nodes: OfficerNode[]; depth?: number }) => {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   return (
-    <div className="space-y-3">
-      {nodes.map((node) => (
-        <div key={node.bot.id} className={`${depth > 0 ? 'ml-4 border-l border-white/8 pl-4' : ''}`}>
-          <div className={`rounded-2xl border bg-white/4 p-4 ${rankTone[node.bot.rank].line}`}>
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${rankTone[node.bot.rank].badge}`}>
-                    {rankTone[node.bot.rank].label}
-                  </span>
-                  <span className="text-sm font-medium text-slate-100">{node.bot.name}</span>
-                  <span className={`rounded-full border px-3 py-1 text-xs font-medium ${statusTone[node.bot.status]}`}>
-                    {node.bot.status.toUpperCase()}
-                  </span>
+    <div className="space-y-2">
+      {nodes.map((node) => {
+        const isExpanded = expanded[node.bot.id];
+        const hasChildren = node.children.length > 0;
+
+        return (
+          <div key={node.bot.id} className={`${depth > 0 ? 'ml-4 border-l border-white/10 pl-4' : ''}`}>
+            <motion.div
+              className={`rounded-xl bg-white/5 p-3 transition-all hover:bg-white/10 ${hasChildren ? 'cursor-pointer' : ''}`}
+              onClick={() => hasChildren && toggleExpand(node.bot.id)}
+            >
+              <div className="flex items-center gap-3">
+                {/* Rank Badge */}
+                <span className={`rounded-lg px-2.5 py-1.5 text-[10px] font-bold ${rankTone[node.bot.rank].badge}`}>
+                  {rankTone[node.bot.rank].label}
+                </span>
+
+                {/* Bot Info */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-white">{node.bot.name}</span>
+                    <span className={`flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] font-medium text-slate-400`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${statusTone[node.bot.status].dot}`} />
+                      {statusTone[node.bot.status].label}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap gap-4 text-sm text-slate-400">
-                  <span>Eficiencia {node.bot.efficiency}%</span>
-                  <span>Tareas completadas {node.bot.completedTasks}</span>
-                  <span>Submandos {node.directReports}</span>
-                  {node.soldierCount > 0 ? <span>Soldados directos {node.soldierCount}</span> : null}
+                {/* Stats */}
+                <div className="hidden items-center gap-3 text-xs text-slate-400 sm:flex">
+                  <span>{node.bot.efficiency}%</span>
+                  <span>{node.bot.completedTasks}</span>
+                  {node.soldierCount > 0 && <span>+{node.soldierCount}</span>}
                 </div>
 
-                {node.bot.currentTask ? (
-                  <p className="mt-3 text-sm text-cyan-100">{node.bot.currentTask}</p>
-                ) : null}
+                {/* Expand Icon */}
+                {hasChildren && (
+                  <div className="text-slate-500">
+                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </div>
+                )}
               </div>
 
-              <div className="rounded-2xl border border-white/8 bg-slate-950/50 px-4 py-3 text-sm text-slate-300">
-                Ultima actividad: {node.bot.lastActive.toLocaleTimeString()}
-              </div>
-            </div>
+              {node.bot.currentTask && (
+                <p className="mt-2 truncate text-xs text-cyan-400">{node.bot.currentTask}</p>
+              )}
+            </motion.div>
+
+            <AnimatePresence>
+              {isExpanded && node.children.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-2 overflow-hidden"
+                >
+                  <OfficerTree nodes={node.children} depth={depth + 1} />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-
-          {node.children.length > 0 ? <OfficerTree nodes={node.children} depth={depth + 1} /> : null}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -113,10 +146,11 @@ export const BotHierarchy = () => {
   const [selectedRank, setSelectedRank] = useState<RankFilter>('all');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'tree' | 'list'>('tree');
 
   const effectiveGroup = selectedGroup || groups[0]?.id || '';
   const groupBots = effectiveGroup ? bots.filter((bot) => bot.groupId === effectiveGroup) : [];
-
   const selectedGroupMeta = groups.find((group) => group.id === effectiveGroup) ?? null;
 
   const countsByRank = groupBots.reduce<Record<BotRank, number>>(
@@ -145,13 +179,10 @@ export const BotHierarchy = () => {
     .filter((bot) => (selectedStatus === 'all' ? true : bot.status === selectedStatus))
     .filter((bot) => {
       const normalizedQuery = search.trim().toLowerCase();
-      if (!normalizedQuery) {
-        return true;
-      }
+      if (!normalizedQuery) return true;
       return (
         bot.name.toLowerCase().includes(normalizedQuery) ||
-        bot.specialization.toLowerCase().includes(normalizedQuery) ||
-        bot.groupName.toLowerCase().includes(normalizedQuery)
+        bot.specialization.toLowerCase().includes(normalizedQuery)
       );
     })
     .sort((left, right) => rankOrder[left.rank] - rankOrder[right.rank] || left.name.localeCompare(right.name));
@@ -159,224 +190,196 @@ export const BotHierarchy = () => {
   const visibleBots = filteredBots.slice(0, 120);
 
   const statCards = [
-    { rank: 'capitan' as const, value: countsByRank.capitan },
-    { rank: 'teniente' as const, value: countsByRank.teniente },
-    { rank: 'alferez' as const, value: countsByRank.alferez },
-    { rank: 'sargento' as const, value: countsByRank.sargento },
-    { rank: 'soldado' as const, value: countsByRank.soldado },
+    { rank: 'capitan' as const, value: countsByRank.capitan, icon: Users },
+    { rank: 'teniente' as const, value: countsByRank.teniente, icon: Users },
+    { rank: 'alferez' as const, value: countsByRank.alferez, icon: Users },
+    { rank: 'sargento' as const, value: countsByRank.sargento, icon: Users },
+    { rank: 'soldado' as const, value: countsByRank.soldado, icon: UserRound },
   ];
 
   return (
-    <div className="space-y-6">
-      <section className="panel panel-glow rounded-[30px] p-6 sm:p-7">
-        <div className="relative z-10">
-          <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full pill-glow px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100">
-                <Layers3 className="h-4 w-4" />
-                Explorador jerarquico
-              </div>
-              <h2 className="mt-4 text-3xl font-semibold text-gradient">Cadena de mando sin sobrecargar la vista</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                La vista anterior intentaba renderizar demasiados nodos. Ahora separa mando y roster para que
-                todo siga siendo legible incluso con miles de soldados.
-              </p>
+    <div className="space-y-4">
+      {/* Header with Stats */}
+      <section className="rounded-[20px] bg-gradient-to-b from-slate-800/80 to-slate-900/80 p-5 backdrop-blur-xl">
+        <div className="mb-4 flex items-start justify-between gap-4 xl:flex-row xl:items-center">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-lg">
+              <Layers3 className="h-6 w-6" />
             </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:max-w-xl xl:grid-cols-3">
-              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/8 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Grupo activo</p>
-                <p className="mt-3 text-xl font-semibold text-cyan-100">
-                  {selectedGroupMeta?.name ?? 'Sin datos'}
-                </p>
-                <p className="mt-2 text-sm text-slate-400">{selectedGroupMeta?.id ?? 'Selecciona un grupo'}</p>
-              </div>
-              <div className="rounded-2xl border border-violet-400/20 bg-violet-400/8 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Bots filtrados</p>
-                <p className="mt-3 text-xl font-semibold text-violet-100">{filteredBots.length.toLocaleString()}</p>
-                <p className="mt-2 text-sm text-slate-400">Busqueda, rango y estado combinados</p>
-              </div>
-              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/8 p-4 sm:col-span-2 xl:col-span-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Mando</p>
-                <p className="mt-3 text-xl font-semibold text-emerald-100">{commandTree.length.toLocaleString()}</p>
-                <p className="mt-2 text-sm text-slate-400">Nodos raiz para el grupo seleccionado</p>
-              </div>
+            <div>
+              <p className="text-sm font-bold text-white">Jerarquia</p>
+              <p className="text-xs text-slate-400">{selectedGroupMeta?.name || 'Selecciona grupo'}</p>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 lg:grid-cols-4">
-            <label className="space-y-2 lg:col-span-1">
-              <span className="text-sm text-slate-300">Grupo</span>
-              <select
-                value={effectiveGroup}
-                onChange={(event) => setSelectedGroup(event.target.value)}
-                className="w-full rounded-2xl border border-white/8 bg-slate-950/65 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/15"
-              >
-                {groups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm text-slate-300">Rango</span>
-              <select
-                value={selectedRank}
-                onChange={(event) => setSelectedRank(event.target.value as RankFilter)}
-                className="w-full rounded-2xl border border-white/8 bg-slate-950/65 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/15"
-              >
-                <option value="all">Todos</option>
-                <option value="capitan">Capitan</option>
-                <option value="teniente">Teniente</option>
-                <option value="alferez">Alferez</option>
-                <option value="sargento">Sargento</option>
-                <option value="soldado">Soldado</option>
-              </select>
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm text-slate-300">Estado</span>
-              <select
-                value={selectedStatus}
-                onChange={(event) => setSelectedStatus(event.target.value as StatusFilter)}
-                className="w-full rounded-2xl border border-white/8 bg-slate-950/65 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/15"
-              >
-                <option value="all">Todos</option>
-                <option value="idle">Idle</option>
-                <option value="working">Working</option>
-                <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
-                <option value="paused">Paused</option>
-              </select>
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm text-slate-300">Busqueda</span>
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-                <input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Nombre o especializacion"
-                  className="w-full rounded-2xl border border-white/8 bg-slate-950/65 py-3 pl-11 pr-4 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/15"
-                />
-              </div>
-            </label>
+          {/* View Mode Toggle */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('tree')}
+              className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${viewMode === 'tree'
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                }`}
+            >
+              Arbol
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`rounded-lg px-3 py-2 text-xs font-medium transition-all ${viewMode === 'list'
+                ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white'
+                : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                }`}
+            >
+              Lista
+            </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="rounded-lg bg-white/5 px-3 py-2 text-slate-400 hover:bg-white/10"
+            >
+              <Search className="h-4 w-4" />
+            </button>
           </div>
         </div>
-      </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        {statCards.map((card, index) => (
-          <motion.div
-            key={card.rank}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.04 }}
-            className={`panel rounded-[24px] p-5 ${rankTone[card.rank].badge}`}
-          >
-            <div className="relative z-10 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{rankTone[card.rank].label}</p>
-                <p className="mt-3 text-3xl font-semibold text-slate-50">{card.value.toLocaleString()}</p>
-              </div>
-              <div className="rounded-2xl border border-white/8 bg-slate-950/55 p-3">
-                <UserRound className="h-5 w-5 text-slate-100" />
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </section>
+        {/* Filter Panel - Collapsible */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+                <select
+                  value={effectiveGroup}
+                  onChange={(event) => setSelectedGroup(event.target.value)}
+                  className="rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white outline-none"
+                >
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id} className="bg-slate-800">
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
 
-      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="panel rounded-[30px] p-6 sm:p-7">
-          <div className="relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-violet-400/20 bg-violet-400/8 p-3">
-                <Workflow className="h-5 w-5 text-violet-100" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-slate-100">Cadena de mando</h3>
-                <p className="mt-1 text-sm text-slate-400">Se muestran oficiales y subordinacion sin renderizar miles de soldados.</p>
-              </div>
-            </div>
+                <select
+                  value={selectedRank}
+                  onChange={(event) => setSelectedRank(event.target.value as RankFilter)}
+                  className="rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white outline-none"
+                >
+                  <option value="all" className="bg-slate-800">Todos</option>
+                  <option value="capitan" className="bg-slate-800">Capitan</option>
+                  <option value="teniente" className="bg-slate-800">Teniente</option>
+                  <option value="alferez" className="bg-slate-800">Alferez</option>
+                  <option value="sargento" className="bg-slate-800">Sargento</option>
+                  <option value="soldado" className="bg-slate-800">Soldado</option>
+                </select>
 
-            <div className="mt-6">
-              {commandTree.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/4 px-5 py-10 text-center text-sm text-slate-400">
-                  No hay estructura disponible para este grupo.
+                <select
+                  value={selectedStatus}
+                  onChange={(event) => setSelectedStatus(event.target.value as StatusFilter)}
+                  className="rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white outline-none"
+                >
+                  <option value="all" className="bg-slate-800">Todos</option>
+                  <option value="idle" className="bg-slate-800">Idle</option>
+                  <option value="working" className="bg-slate-800">Working</option>
+                  <option value="completed" className="bg-slate-800">Completed</option>
+                  <option value="failed" className="bg-slate-800">Failed</option>
+                  <option value="paused" className="bg-slate-800">Paused</option>
+                </select>
+
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Buscar..."
+                    className="w-full rounded-lg bg-white/5 py-2.5 pl-10 pr-3 text-sm text-white outline-none placeholder:text-slate-600"
+                  />
                 </div>
-              ) : (
-                <OfficerTree nodes={commandTree} />
-              )}
-            </div>
-          </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Quick Stats */}
+        <div className="mt-4 grid grid-cols-5 gap-2">
+          {statCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={card.rank}
+                className={`rounded-xl bg-gradient-to-br ${rankTone[card.rank].gradient} p-3 text-center`}
+              >
+                <Icon className="mx-auto mb-1 h-4 w-4 text-white/70" />
+                <p className="text-lg font-bold text-white">{card.value}</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/70">{rankTone[card.rank].label}</p>
+              </div>
+            );
+          })}
         </div>
+      </section>
 
-        <div className="panel rounded-[30px] p-6 sm:p-7">
-          <div className="relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/8 p-3">
-                <Users className="h-5 w-5 text-cyan-100" />
+      {/* Main Content */}
+      <section className="rounded-[20px] bg-gradient-to-b from-slate-800/80 to-slate-900/80 p-5 backdrop-blur-xl">
+        {viewMode === 'tree' ? (
+          <div>
+            <div className="mb-4 flex items-center gap-2">
+              <Workflow className="h-5 w-5 text-violet-400" />
+              <p className="text-sm font-semibold text-white">Cadena de mando</p>
+            </div>
+
+            {commandTree.length === 0 ? (
+              <div className="rounded-xl bg-white/5 p-8 text-center text-sm text-slate-500">
+                Sin estructura disponible
               </div>
-              <div>
-                <h3 className="text-xl font-semibold text-slate-100">Roster filtrado</h3>
-                <p className="mt-1 text-sm text-slate-400">
-                  Mostrando {visibleBots.length.toLocaleString()} de {filteredBots.length.toLocaleString()} resultados.
-                </p>
+            ) : (
+              <OfficerTree nodes={commandTree} />
+            )}
+          </div>
+        ) : (
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-cyan-400" />
+                <p className="text-sm font-semibold text-white">Roster</p>
+                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-slate-400">
+                  {visibleBots.length}/{filteredBots.length}
+                </span>
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-amber-400/18 bg-amber-400/8 px-4 py-3 text-sm text-slate-300">
-              La lista se limita a 120 elementos para mantener la interfaz rapida y estable.
-            </div>
-
-            <div className="mt-6 space-y-3">
+            <div className="max-h-[600px] space-y-2 overflow-y-auto scrollbar-hide">
               {visibleBots.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/4 px-5 py-10 text-center text-sm text-slate-400">
-                  No hay bots que coincidan con los filtros actuales.
+                <div className="rounded-xl bg-white/5 p-8 text-center text-sm text-slate-500">
+                  Sin resultados
                 </div>
               ) : (
                 visibleBots.map((bot) => (
-                  <div key={bot.id} className="rounded-2xl border border-white/8 bg-white/4 p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${rankTone[bot.rank].badge}`}>
-                            {rankTone[bot.rank].label}
-                          </span>
-                          <span className={`rounded-full border px-3 py-1 text-xs font-medium ${statusTone[bot.status]}`}>
-                            {bot.status.toUpperCase()}
-                          </span>
-                        </div>
-                        <p className="mt-3 text-sm font-medium text-slate-100">{bot.name}</p>
-                        <p className="mt-1 text-sm text-slate-400">{bot.specialization}</p>
-                        {bot.currentTask ? <p className="mt-2 text-sm text-cyan-100">{bot.currentTask}</p> : null}
+                  <div key={bot.id} className="rounded-xl bg-white/5 p-3 transition-all hover:bg-white/10">
+                    <div className="flex items-center gap-3">
+                      <span className={`rounded-lg px-2.5 py-1.5 text-[10px] font-bold ${rankTone[bot.rank].badge}`}>
+                        {rankTone[bot.rank].label}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">{bot.name}</p>
+                        <p className="text-xs text-slate-500">{bot.specialization}</p>
                       </div>
-
-                      <div className="rounded-2xl border border-white/8 bg-slate-950/55 px-4 py-3 text-right text-sm text-slate-300">
-                        <p>Tareas {bot.completedTasks}</p>
-                        <p className="mt-1">Ultima actividad {bot.lastActive.toLocaleTimeString()}</p>
+                      <div className="flex items-center gap-3 text-xs text-slate-400">
+                        <span>{bot.completedTasks}</span>
+                        <span className={`flex items-center gap-1.5`}>
+                          <span className={`h-2 w-2 rounded-full ${statusTone[bot.status].dot}`} />
+                          {statusTone[bot.status].label}
+                        </span>
                       </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
-
-            <div className="mt-6 rounded-2xl border border-emerald-400/18 bg-emerald-400/8 p-4">
-              <div className="flex items-start gap-3">
-                <ShieldCheck className="mt-0.5 h-5 w-5 text-emerald-100" />
-                <p className="text-sm leading-6 text-slate-300">
-                  Corregi el problema de filtrado por rango: ahora la vista no rompe la jerarquia ni desaparece al
-                  seleccionar rangos intermedios o soldados.
-                </p>
-              </div>
-            </div>
           </div>
-        </div>
+        )}
       </section>
     </div>
   );

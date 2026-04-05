@@ -43,6 +43,32 @@ const suggestions = [
   },
 ];
 
+const builderChips = [
+  'Prioridad critica',
+  'Aplicar a toda la flota',
+  'Generar resumen ejecutivo',
+  'Notificar al finalizar',
+];
+
+const guidedTemplates = [
+  {
+    label: 'Seguridad',
+    command: 'Prioridad critica. Revisar seguridad, detectar anomalias y emitir informe final.',
+  },
+  {
+    label: 'Escalado',
+    command: 'Evaluar la carga actual, reasignar bots libres y escalar los grupos que esten saturados.',
+  },
+  {
+    label: 'Contenido',
+    command: 'Preparar flujo de contenido, validar mensajes y generar calendario de ejecucion.',
+  },
+  {
+    label: 'Auditoria',
+    command: 'Auditar logs recientes, detectar errores repetidos y proponer acciones correctivas.',
+  },
+];
+
 export const CommandInterface = () => {
   const [command, setCommand] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -51,6 +77,7 @@ export const CommandInterface = () => {
   const processingCount = commandLogs.filter((log) => log.status === 'processing').length;
   const successCount = commandLogs.filter((log) => log.status === 'success').length;
   const errorCount = commandLogs.filter((log) => log.status === 'error').length;
+  const latestLog = commandLogs[0] ?? null;
 
   const handleCommand = async () => {
     if (!command.trim()) {
@@ -64,6 +91,18 @@ export const CommandInterface = () => {
     window.setTimeout(() => {
       setIsProcessing(false);
     }, 900);
+  };
+
+  const applyBuilderChip = (chip: string) => {
+    setCommand((current) => {
+      const trimmed = current.trim();
+      return trimmed ? `${trimmed}. ${chip}` : chip;
+    });
+  };
+
+  const useRandomTemplate = () => {
+    const randomTemplate = guidedTemplates[Math.floor(Math.random() * guidedTemplates.length)];
+    setCommand(randomTemplate.command);
   };
 
   const getStatusMeta = (status: string) => {
@@ -128,6 +167,19 @@ export const CommandInterface = () => {
                 );
               })}
             </div>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              {builderChips.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => applyBuilderChip(chip)}
+                  className="rounded-full border border-white/8 bg-white/4 px-4 py-2 text-sm text-slate-200 transition hover:border-cyan-400/30 hover:bg-cyan-400/8"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
@@ -181,6 +233,19 @@ export const CommandInterface = () => {
               </div>
 
               <div className="mt-5 rounded-[28px] border border-white/8 bg-slate-950/70 p-4">
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {guidedTemplates.map((template) => (
+                    <button
+                      key={template.label}
+                      type="button"
+                      onClick={() => setCommand(template.command)}
+                      className="rounded-full border border-white/8 bg-white/4 px-4 py-2 text-sm text-slate-200 transition hover:border-cyan-400/30 hover:bg-cyan-400/8"
+                    >
+                      {template.label}
+                    </button>
+                  ))}
+                </div>
+
                 <textarea
                   value={command}
                   onChange={(event) => setCommand(event.target.value)}
@@ -196,26 +261,42 @@ export const CommandInterface = () => {
 
                 <div className="mt-4 flex flex-col gap-3 border-t border-white/6 pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-                      <span className="rounded-full pill-soft px-3 py-2">critica o urgente = prioridad alta</span>
-                      <span className="rounded-full pill-soft px-3 py-2">importante = prioridad media-alta</span>
-                      <span className="rounded-full pill-soft px-3 py-2">grupo + nombre = asignacion dirigida</span>
+                    <span className="rounded-full pill-soft px-3 py-2">critica o urgente = prioridad alta</span>
+                    <span className="rounded-full pill-soft px-3 py-2">importante = prioridad media-alta</span>
+                    <span className="rounded-full pill-soft px-3 py-2">grupo + nombre = asignacion dirigida</span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => void handleCommand()}
-                    disabled={!command.trim() || isProcessing}
-                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/12 px-5 py-3 font-medium text-cyan-100 transition hover:bg-cyan-400/18 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isProcessing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    Ejecutar orden
-                  </button>
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setCommand('')}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-medium text-slate-200 transition hover:bg-white/8"
+                    >
+                      Limpiar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={useRandomTemplate}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-violet-400/24 bg-violet-400/12 px-5 py-3 font-medium text-violet-100 transition hover:bg-violet-400/18"
+                    >
+                      Sugerir orden
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleCommand()}
+                      disabled={!command.trim() || isProcessing}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/12 px-5 py-3 font-medium text-cyan-100 transition hover:bg-cyan-400/18 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isProcessing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      Ejecutar orden
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
 
             <div className="rounded-[28px] border border-white/8 bg-white/4 p-5">
-              <h4 className="text-lg font-semibold text-slate-100">Ayuda rapida</h4>
+              <h4 className="text-lg font-semibold text-slate-100">Panel auxiliar</h4>
               <div className="mt-4 space-y-3 text-sm text-slate-300">
                 <div className="rounded-2xl border border-cyan-400/18 bg-cyan-400/8 p-4">
                   Las ordenes ahora actualizan el registro con exito, error o progreso real.
@@ -225,6 +306,12 @@ export const CommandInterface = () => {
                 </div>
                 <div className="rounded-2xl border border-emerald-400/18 bg-emerald-400/8 p-4">
                   Los bots terminan una orden y vuelven a estar disponibles para la siguiente cola.
+                </div>
+                <div className="rounded-2xl border border-white/8 bg-slate-950/55 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Ultima respuesta</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    {latestLog ? latestLog.response : 'Todavia no hay respuesta reciente para mostrar en este panel.'}
+                  </p>
                 </div>
               </div>
             </div>

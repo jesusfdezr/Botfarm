@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
+  Activity,
   BellRing,
+  ChevronDown,
   Gauge,
   RefreshCcw,
   Save,
@@ -20,220 +22,238 @@ import IntegrationHub from './components/IntegrationHub';
 import { Sidebar } from './components/Sidebar';
 import { TaskManager } from './components/TaskManager';
 import { useBotStore } from './store/botStore';
-
-type TabId = 'dashboard' | 'command' | 'hierarchy' | 'tasks' | 'integrations' | 'settings';
+import { navigationTabs, type TabId } from './components/navigation';
 
 const SettingsPanel = () => {
   const { groups, tasks, getStats } = useBotStore();
   const stats = getStats();
   const activeGroups = groups.filter((group) => group.status === 'active').length;
   const queueSize = tasks.filter((task) => task.status === 'pending' || task.status === 'processing').length;
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    performance: true,
+    parameters: false,
+    deployment: false,
+  });
+
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const systemCards = [
     {
-      title: 'Rendimiento',
-      value: `${stats.totalBots.toLocaleString()} bots`,
-      detail: `${stats.activeBots.toLocaleString()} en ejecucion simultanea`,
+      title: 'Bots',
+      value: stats.totalBots,
+      detail: `${stats.activeBots} activos`,
       icon: Gauge,
-      tone: 'text-cyan-200',
-      surface: 'border-cyan-400/20 bg-cyan-400/8',
+      gradient: 'from-cyan-400 to-blue-500',
     },
     {
-      title: 'Cobertura',
-      value: `${activeGroups}/${groups.length} grupos`,
-      detail: 'Balanceo automatico y capacidad disponible',
+      title: 'Grupos',
+      value: `${activeGroups}/${groups.length}`,
+      detail: 'activos',
       icon: Workflow,
-      tone: 'text-violet-200',
-      surface: 'border-violet-400/20 bg-violet-400/8',
+      gradient: 'from-violet-400 to-purple-500',
     },
     {
       title: 'Seguridad',
-      value: 'Guardias activas',
-      detail: 'Panel listo para auditoria y alertas',
+      value: 'OK',
+      detail: 'Guardias activas',
       icon: ShieldCheck,
-      tone: 'text-emerald-200',
-      surface: 'border-emerald-400/20 bg-emerald-400/8',
+      gradient: 'from-emerald-400 to-green-500',
     },
     {
-      title: 'Cola activa',
-      value: queueSize.toLocaleString(),
-      detail: 'Ordenes pendientes y en proceso',
+      title: 'Cola',
+      value: queueSize,
+      detail: 'pendientes',
       icon: BellRing,
-      tone: 'text-amber-200',
-      surface: 'border-amber-400/20 bg-amber-400/8',
+      gradient: 'from-amber-400 to-orange-500',
     },
   ];
 
   const inputs = [
-    { label: 'Grupos disponibles', defaultValue: groups.length || 10, min: 1, max: 50 },
-    { label: 'Intervalo de ejecucion (ms)', defaultValue: 450, min: 100, max: 5000 },
-    { label: 'Bots por lote', defaultValue: 48, min: 8, max: 200 },
-    { label: 'Alertas por uso (%)', defaultValue: 85, min: 50, max: 100 },
+    { label: 'Grupos', defaultValue: groups.length || 10, min: 1, max: 50, icon: Workflow },
+    { label: 'Intervalo (ms)', defaultValue: 450, min: 100, max: 5000, icon: SlidersHorizontal },
+    { label: 'Bots/lote', defaultValue: 48, min: 8, max: 200, icon: Gauge },
+    { label: 'Alerta (%)', defaultValue: 85, min: 50, max: 100, icon: BellRing },
   ];
 
   return (
-    <div className="space-y-6">
-      <section className="panel panel-glow rounded-[28px] p-6 sm:p-7">
-        <div className="relative z-10 flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full pill-glow px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-cyan-100">
-              <SlidersHorizontal className="h-4 w-4" />
-              Centro de configuracion
-            </div>
-            <h2 className="mt-4 text-3xl font-semibold text-gradient">Sistema estable y listo para ajustar</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              Reorganice esta vista para que los controles se lean mejor, las prioridades esten claras y los
-              indicadores utiles queden a la vista sin ruido.
-            </p>
-          </div>
-
-          <div className="grid w-full gap-3 sm:grid-cols-2 xl:max-w-xl">
-            {systemCards.map((card) => {
-              const Icon = card.icon;
-              return (
-                <div
-                  key={card.title}
-                  className={`rounded-2xl border p-4 backdrop-blur ${card.surface}`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{card.title}</p>
-                      <p className={`mt-2 text-xl font-semibold ${card.tone}`}>{card.value}</p>
-                      <p className="mt-2 text-sm text-slate-400">{card.detail}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                      <Icon className={`h-5 w-5 ${card.tone}`} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+    <div className="space-y-4">
+      {/* System Status Cards */}
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        {systemCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <motion.div
+              key={card.title}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`rounded-[16px] bg-gradient-to-br ${card.gradient} p-4 text-white shadow-lg`}
+            >
+              <Icon className="mb-2 h-5 w-5 text-white/70" />
+              <p className="text-2xl font-bold">{card.value}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white/70">{card.title}</p>
+              <p className="mt-0.5 text-[10px] text-white/60">{card.detail}</p>
+            </motion.div>
+          );
+        })}
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="panel rounded-[28px] p-6 sm:p-7">
-          <div className="relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/8 p-3">
-                <Settings className="h-5 w-5 text-cyan-200" />
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-slate-100">Parametros del orquestador</h3>
-                <p className="mt-1 text-sm text-slate-400">
-                  Ajustes presentados con una jerarquia mas limpia y legible.
-                </p>
-              </div>
+      {/* Parameters Section */}
+      <section className="rounded-[20px] bg-gradient-to-b from-slate-800/80 to-slate-900/80 p-5 backdrop-blur-xl">
+        <button
+          onClick={() => toggleSection('parameters')}
+          className="flex w-full items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 text-white">
+              <Settings className="h-5 w-5" />
             </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {inputs.map((input) => (
-                <label key={input.label} className="space-y-2">
-                  <span className="text-sm text-slate-300">{input.label}</span>
-                  <input
-                    type="number"
-                    min={input.min}
-                    max={input.max}
-                    defaultValue={input.defaultValue}
-                    className="w-full rounded-2xl border border-white/8 bg-slate-950/65 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/15"
-                  />
-                </label>
-              ))}
-            </div>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <label className="space-y-2">
-                <span className="text-sm text-slate-300">Modo de despliegue</span>
-                <select className="w-full rounded-2xl border border-white/8 bg-slate-950/65 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/15">
-                  <option>Operacion estable</option>
-                  <option>Escalado progresivo</option>
-                  <option>Pruebas controladas</option>
-                </select>
-              </label>
-
-              <label className="space-y-2">
-                <span className="text-sm text-slate-300">Politica de notificaciones</span>
-                <select className="w-full rounded-2xl border border-white/8 bg-slate-950/65 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/15">
-                  <option>Solo incidencias criticas</option>
-                  <option>Actividad y alertas</option>
-                  <option>Resumen horario</option>
-                </select>
-              </label>
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button className="inline-flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/12 px-5 py-3 font-medium text-cyan-100 transition hover:bg-cyan-400/18">
-                <Save className="h-4 w-4" />
-                Guardar configuracion
-              </button>
-              <button className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 font-medium text-slate-200 transition hover:bg-white/8">
-                <RefreshCcw className="h-4 w-4" />
-                Restablecer valores
-              </button>
-            </div>
+            <p className="text-sm font-semibold text-white">Parametros</p>
           </div>
-        </div>
+          <motion.div
+            animate={{ rotate: expandedSections.parameters ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-slate-400"
+          >
+            <ChevronDown className="h-5 w-5" />
+          </motion.div>
+        </button>
 
-        <div className="space-y-6">
-          <section className="panel rounded-[28px] p-6">
-            <div className="relative z-10">
-              <h3 className="text-lg font-semibold text-slate-100">Estado operativo</h3>
-              <div className="mt-5 space-y-4">
+        <AnimatePresence>
+          {expandedSections.parameters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 overflow-hidden"
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                {inputs.map((input) => {
+                  const Icon = input.icon;
+                  return (
+                    <div key={input.label} className="rounded-xl bg-white/5 p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Icon className="h-4 w-4 text-slate-400" />
+                          <span className="text-xs text-slate-400">{input.label}</span>
+                        </div>
+                        <span className="text-sm font-bold text-white">{input.defaultValue}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={input.min}
+                        max={input.max}
+                        defaultValue={input.defaultValue}
+                        className="slider w-full accent-cyan-400"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl bg-white/5 p-4">
+                  <p className="mb-2 text-xs text-slate-400">Modo despliegue</p>
+                  <select className="w-full rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white outline-none">
+                    <option value="stable" className="bg-slate-800">Operacion estable</option>
+                    <option value="progressive" className="bg-slate-800">Escalado progresivo</option>
+                    <option value="testing" className="bg-slate-800">Pruebas controladas</option>
+                  </select>
+                </div>
+
+                <div className="rounded-xl bg-white/5 p-4">
+                  <p className="mb-2 text-xs text-slate-400">Notificaciones</p>
+                  <select className="w-full rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white outline-none">
+                    <option value="critical" className="bg-slate-800">Solo criticas</option>
+                    <option value="all" className="bg-slate-800">Actividad y alertas</option>
+                    <option value="summary" className="bg-slate-800">Resumen horario</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-3">
+                <button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110">
+                  <Save className="h-4 w-4" />
+                  Guardar
+                </button>
+                <button className="flex items-center gap-2 rounded-xl bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white">
+                  <RefreshCcw className="h-4 w-4" />
+                  Restablecer
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </section>
+
+      {/* Status & Progress Bars */}
+      <section className="rounded-[20px] bg-gradient-to-b from-slate-800/80 to-slate-900/80 p-5 backdrop-blur-xl">
+        <button
+          onClick={() => toggleSection('performance')}
+          className="flex w-full items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 text-white">
+              <Activity className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-semibold text-white">Estado</p>
+          </div>
+          <motion.div
+            animate={{ rotate: expandedSections.performance ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+            className="text-slate-400"
+          >
+            <ChevronDown className="h-5 w-5" />
+          </motion.div>
+        </button>
+
+        <AnimatePresence>
+          {expandedSections.performance && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 overflow-hidden"
+            >
+              <div className="space-y-4">
                 {[
                   {
-                    label: 'Bots listos para nueva tarea',
+                    label: 'Bots disponibles',
                     value: `${(stats.totalBots - stats.activeBots).toLocaleString()} libres`,
                     progress: stats.totalBots > 0 ? ((stats.totalBots - stats.activeBots) / stats.totalBots) * 100 : 0,
-                    tone: 'from-cyan-400 to-blue-500',
+                    gradient: 'from-cyan-400 to-blue-500',
                   },
                   {
-                    label: 'Exito acumulado',
+                    label: 'Exito',
                     value: `${stats.successRate.toFixed(1)}%`,
                     progress: stats.successRate,
-                    tone: 'from-emerald-400 to-cyan-400',
+                    gradient: 'from-emerald-400 to-green-500',
                   },
                   {
-                    label: 'Carga de la cola',
+                    label: 'Carga cola',
                     value: `${queueSize} elementos`,
                     progress: Math.min(queueSize * 6, 100),
-                    tone: 'from-violet-400 to-cyan-400',
+                    gradient: 'from-violet-400 to-purple-500',
                   },
                 ].map((item) => (
-                  <div key={item.label}>
-                    <div className="mb-2 flex items-center justify-between text-sm">
-                      <span className="text-slate-300">{item.label}</span>
-                      <span className="text-slate-100">{item.value}</span>
+                  <div key={item.label} className="rounded-xl bg-white/5 p-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-xs text-slate-400">{item.label}</span>
+                      <span className="text-sm font-bold text-white">{item.value}</span>
                     </div>
-                    <div className="h-2 rounded-full bg-white/6">
+                    <div className="h-2 rounded-full bg-white/10">
                       <div
-                        className={`h-2 rounded-full bg-gradient-to-r ${item.tone}`}
+                        className={`h-2 rounded-full bg-gradient-to-r ${item.gradient}`}
                         style={{ width: `${Math.max(item.progress, 4)}%` }}
                       />
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </section>
-
-          <section className="panel rounded-[28px] p-6">
-            <div className="relative z-10">
-              <h3 className="text-lg font-semibold text-slate-100">Checklist visual</h3>
-              <div className="mt-4 space-y-3 text-sm text-slate-300">
-                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/8 px-4 py-3">
-                  Contraste oscuro con neones suaves y paneles consistentes.
-                </div>
-                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/8 px-4 py-3">
-                  Jerarquia simplificada para evitar vistas pesadas o confusas.
-                </div>
-                <div className="rounded-2xl border border-violet-400/20 bg-violet-400/8 px-4 py-3">
-                  Controles y tarjetas revisados para verse bien en movil y escritorio.
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
     </div>
   );
@@ -296,7 +316,7 @@ function App() {
       </div>
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1680px] flex-col px-4 py-4 sm:px-6 lg:px-8">
-        <Header />
+        <Header activeTab={activeTab} setActiveTab={setActiveTab} />
 
         <div className="mt-4 flex flex-1 flex-col gap-4 xl:flex-row">
           <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -314,6 +334,32 @@ function App() {
               </motion.div>
             </AnimatePresence>
           </main>
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/8 bg-[rgba(6,10,18,0.92)] p-3 backdrop-blur xl:hidden">
+        <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2">
+          {navigationTabs.slice(0, 4).map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-xl px-3 py-3 text-center transition ${isActive
+                    ? 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-md'
+                    : 'bg-white/5 text-slate-400'
+                  }`}
+              >
+                <div className="flex flex-col items-center gap-1.5">
+                  <Icon className="h-5 w-5" />
+                  <span className="text-[10px] font-medium">{tab.label}</span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

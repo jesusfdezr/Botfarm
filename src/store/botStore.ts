@@ -365,13 +365,17 @@ export const useBotStore = create<BotStore>((set, get) => ({
 
       if (groupsError || botsError) throw new Error('Error al cargar datos de Supabase');
 
-      if (dbGroups && dbGroups.length > 0) {
+      if (dbGroups && dbGroups.length > 0 && dbBots && dbBots.length > 0) {
         set({ 
           groups: dbGroups.map(g => ({ ...g, createdAt: new Date(g.created_at) })), 
           bots: dbBots.map(b => ({ ...b, lastActive: new Date(b.last_active) })) 
         });
         return;
       }
+
+      // Cleanup existing empty groups/bots if any (prevents ID conflicts during the first fresh run)
+      await supabase.from('bots').delete().neq('id', '0');
+      await supabase.from('groups').delete().neq('id', '0');
 
       // First initialization if DB is empty
       const allBots: Bot[] = [];

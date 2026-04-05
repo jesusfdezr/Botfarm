@@ -1,7 +1,7 @@
 interface TwitterEnv {
-  VITE_X_CLIENT_ID?: string;
-  VITE_X_REDIRECT_URI?: string;
-  VITE_X_SCOPES?: string;
+  NEXT_PUBLIC_X_CLIENT_ID?: string;
+  NEXT_PUBLIC_X_REDIRECT_URI?: string;
+  NEXT_PUBLIC_X_SCOPES?: string;
 }
 
 export interface TwitterOAuthConfig {
@@ -74,7 +74,11 @@ const REVOKE_URL = 'https://api.x.com/2/oauth2/revoke';
 const ME_URL =
   'https://api.x.com/2/users/me?user.fields=created_at,description,verified,public_metrics,profile_image_url';
 
-const getEnv = (): TwitterEnv => ((import.meta as ImportMeta & { env?: TwitterEnv }).env ?? {});
+const getEnv = (): TwitterEnv => ({
+  NEXT_PUBLIC_X_CLIENT_ID: process.env.NEXT_PUBLIC_X_CLIENT_ID,
+  NEXT_PUBLIC_X_REDIRECT_URI: process.env.NEXT_PUBLIC_X_REDIRECT_URI,
+  NEXT_PUBLIC_X_SCOPES: process.env.NEXT_PUBLIC_X_SCOPES,
+});
 
 const canUseWindow = () => typeof window !== 'undefined';
 
@@ -174,12 +178,12 @@ const sha256Base64Url = async (value: string) => {
 
 const normalizeConfig = (value?: Partial<TwitterOAuthConfig> | null): TwitterOAuthConfig => {
   const env = getEnv();
-  const defaultRedirect = env.VITE_X_REDIRECT_URI?.trim() || getFallbackRedirectUri();
+  const defaultRedirect = env.NEXT_PUBLIC_X_REDIRECT_URI?.trim() || getFallbackRedirectUri();
 
   return {
-    clientId: value?.clientId?.trim() || env.VITE_X_CLIENT_ID?.trim() || '',
+    clientId: value?.clientId?.trim() || env.NEXT_PUBLIC_X_CLIENT_ID?.trim() || '',
     redirectUri: value?.redirectUri?.trim() || defaultRedirect,
-    scopes: sanitizeScopes(value?.scopes ?? env.VITE_X_SCOPES),
+    scopes: sanitizeScopes(value?.scopes ?? env.NEXT_PUBLIC_X_SCOPES),
   };
 };
 

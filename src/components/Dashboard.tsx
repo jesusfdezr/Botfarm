@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Activity,
@@ -28,8 +29,13 @@ const statusTone = {
 };
 
 export const Dashboard = () => {
+  const [isChartReady, setIsChartReady] = useState(false);
   const { bots, groups, tasks, getStats } = useBotStore();
   const stats = getStats();
+
+  useEffect(() => {
+    setIsChartReady(true);
+  }, []);
 
   const activeTasks = tasks.filter((task) => task.status === 'pending' || task.status === 'processing').length;
   const activeByGroup = groups.reduce<Record<string, number>>((accumulator, group) => {
@@ -165,47 +171,51 @@ export const Dashboard = () => {
             </div>
 
             <div className="mt-6 h-[320px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={activitySeries}>
-                  <defs>
-                    <linearGradient id="loadGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6ae6ff" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#6ae6ff" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="throughputGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ac7cff" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="#ac7cff" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
-                  <XAxis dataKey="label" stroke="#7e8aa7" tickLine={false} axisLine={false} />
-                  <YAxis stroke="#7e8aa7" tickLine={false} axisLine={false} />
-                  <Tooltip
-                    contentStyle={{
-                      border: '1px solid rgba(106,230,255,0.16)',
-                      borderRadius: '18px',
-                      backgroundColor: 'rgba(7,12,23,0.94)',
-                      color: '#f5f7ff',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="load"
-                    stroke="#6ae6ff"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#loadGradient)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="throughput"
-                    stroke="#ac7cff"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#throughputGradient)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {isChartReady ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={activitySeries}>
+                    <defs>
+                      <linearGradient id="loadGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6ae6ff" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#6ae6ff" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="throughputGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#ac7cff" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#ac7cff" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                    <XAxis dataKey="label" stroke="#7e8aa7" tickLine={false} axisLine={false} />
+                    <YAxis stroke="#7e8aa7" tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        border: '1px solid rgba(106,230,255,0.16)',
+                        borderRadius: '18px',
+                        backgroundColor: 'rgba(7,12,23,0.94)',
+                        color: '#f5f7ff',
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="load"
+                      stroke="#6ae6ff"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#loadGradient)"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="throughput"
+                      stroke="#ac7cff"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#throughputGradient)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full rounded-[24px] border border-white/6 bg-white/4" />
+              )}
             </div>
           </div>
         </motion.div>

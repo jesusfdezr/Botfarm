@@ -42,10 +42,6 @@ body {
     linear-gradient(180deg, #03060d 0%, #050b15 42%, #04070f 100%);
 }
 
-#root {
-  min-height: 100vh;
-}
-
 button,
 input,
 textarea,

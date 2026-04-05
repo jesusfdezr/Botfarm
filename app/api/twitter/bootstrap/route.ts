@@ -15,6 +15,11 @@ const isUnauthorizedTwitterError = (detail: string) =>
   detail.includes('"title":"Unauthorized"') ||
   detail.includes("Unauthorized");
 
+const isInvalidTwitterTokenError = (detail: string) =>
+  detail.includes('"error":"invalid_request"') ||
+  detail.includes('"error_description":"Value passed for the token was invalid."') ||
+  detail.includes('token was invalid');
+
 export async function GET() {
   const clientId = process.env.NEXT_PUBLIC_X_CLIENT_ID?.trim();
   const redirectUri =
@@ -148,6 +153,12 @@ export async function GET() {
       });
     }
   } catch (error: any) {
-    return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+    const detail = error?.message || "No se pudo completar el bootstrap de X.";
+    const status = isInvalidTwitterTokenError(detail) ? 400 : 500;
+    const message = isInvalidTwitterTokenError(detail)
+      ? "Los tokens configurados para X ya no son validos. Necesitas generar credenciales nuevas antes de importar la sesion."
+      : detail;
+
+    return NextResponse.json({ ok: false, message }, { status });
   }
 }

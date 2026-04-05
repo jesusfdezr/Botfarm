@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { generateAIResponse } from '../utils/ollama';
+import { supabase } from '../utils/supabase';
 
 export type BotRank = 'capitan' | 'teniente' | 'alferez' | 'sargento' | 'soldado';
 export type BotStatus = 'idle' | 'working' | 'completed' | 'failed' | 'paused';
@@ -357,17 +358,61 @@ export const useBotStore = create<BotStore>((set, get) => ({
   autoscaleSettings: defaultAutoscaleSettings,
   autoscaleState: defaultAutoscaleState,
 
-  initializeBots: () => {
-    if (get().bots.length > 0 && get().groups.length > 0) {
-      return;
+  initializeBots: async () => {
+    try {
+      const { data: dbGroups, error: groupsError } = await supabase.from('groups').select('*');
+      const { data: dbBots, error: botsError } = await supabase.from('bots').select('*');
+
+      if (groupsError || botsError) throw new Error('Error al cargar datos de Supabase');
+
+      if (dbGroups && dbGroups.length > 0) {
+        set({ 
+          groups: dbGroups.map(g => ({ ...g, createdAt: new Date(g.created_at) })), 
+          bots: dbBots.map(b => ({ ...b, lastActive: new Date(b.last_active) })) 
+        });
+        return;
+      }
+
+      // First initialization if DB is empty
+      const allBots: Bot[] = [];
+      const groups = DEFAULT_GROUP_NAMES.map((name, index) =>
+        createGroupRecord(name, index, 'heavy', SPECIALIZATIONS[index % SPECIALIZATIONS.length], `Grupo de operaciones ${name}`, allBots),
+      );
+
+      // Save to Supabase
+      await supabase.from('groups').insert(groups.map(g => ({
+        id: g.id,
+        name: g.name,
+        description: g.description,
+        captain_id: g.captainId,
+        total_bots: g.totalBots,
+        active_bots: g.activeBots,
+        completed_tasks: g.completedTasks,
+        status: g.status,
+        profile: g.profile,
+        focus: g.focus
+      })));
+
+      await supabase.from('bots').insert(allBots.map(b => ({
+        id: b.id,
+        name: b.name,
+        rank: b.rank,
+        group_id: b.groupId,
+        group_name: b.groupName,
+        parent_id: b.parentId,
+        status: b.status,
+        current_task: b.currentTask,
+        completed_tasks: b.completedTasks,
+        failed_tasks: b.failedTasks,
+        efficiency: b.efficiency,
+        specialization: b.specialization,
+        skills: b.skills
+      })));
+
+      set({ bots: allBots, groups });
+    } catch (err) {
+      console.error('Persistence Error:', err);
     }
-
-    const allBots: Bot[] = [];
-    const groups = DEFAULT_GROUP_NAMES.map((name, index) =>
-      createGroupRecord(name, index, 'heavy', SPECIALIZATIONS[index % SPECIALIZATIONS.length], `Grupo de operaciones ${name}`, allBots),
-    );
-
-    set({ bots: allBots, groups });
   },
 
   addCommand: (command) => {
@@ -427,6 +472,16 @@ export const useBotStore = create<BotStore>((set, get) => ({
     };
 
     set((state) => ({ tasks: [task, ...state.tasks].slice(0, 500) }));
+    
+    // Log task to Supabase
+    await supabase.from('tasks').insert([{
+      id: task.id,
+      command: task.command,
+      status: task.status,
+      assigned_group: task.assignedGroup,
+      priority: task.priority,
+      progress: task.progress
+    }]);
 
     setTimeout(async () => {
       task.status = 'processing';
@@ -494,6 +549,14 @@ export const useBotStore = create<BotStore>((set, get) => ({
           set((state) => ({ tasks: state.tasks.map((currentTask) => (currentTask.id === task.id ? { ...task } : currentTask)) }));
           updateCommandLog(logId, 'success', aiResponse);
 
+          // Final sync to Supabase
+          supabase.from('tasks').update({ 
+            status: 'completed', 
+            progress: 100, 
+            result: aiResponse,
+            completed_at: task.completedAt.toISOString()
+          }).eq('id', task.id).then();
+
           setTimeout(() => {
             assignedBots.forEach((botId) => updateBotStatus(botId, 'idle'));
           }, 900);
@@ -502,6 +565,9 @@ export const useBotStore = create<BotStore>((set, get) => ({
 
         task.progress = progress;
         set((state) => ({ tasks: state.tasks.map((currentTask) => (currentTask.id === task.id ? { ...task } : currentTask)) }));
+        
+        // Async update progress in Supabase
+        supabase.from('tasks').update({ progress }).eq('id', task.id).then();
       }, 450);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido en el motor AI.';
@@ -510,6 +576,12 @@ export const useBotStore = create<BotStore>((set, get) => ({
       updateCommandLog(logId, 'error', task.result);
       set((state) => ({ tasks: state.tasks.map((currentTask) => (currentTask.id === task.id ? { ...task } : currentTask)) }));
       assignedBots.forEach((botId) => updateBotStatus(botId, 'idle'));
+      
+      // Sync failure to Supabase
+      supabase.from('tasks')
+        .update({ status: 'failed', result: task.result })
+        .eq('id', task.id)
+        .then();
     }
     }, 600);
   },
@@ -529,6 +601,18 @@ export const useBotStore = create<BotStore>((set, get) => ({
           : bot,
       ),
     }));
+
+    // Sync bot status to Supabase
+    const updatedBot = get().bots.find(b => b.id === botId);
+    if (updatedBot) {
+      supabase.from('bots').update({
+        status: updatedBot.status,
+        current_task: updatedBot.currentTask,
+        completed_tasks: updatedBot.completedTasks,
+        failed_tasks: updatedBot.failedTasks,
+        last_active: updatedBot.lastActive.toISOString()
+      }).eq('id', botId).then();
+    }
   },
 
   assignTaskToGroup: (groupId, task) => {

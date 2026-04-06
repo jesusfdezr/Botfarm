@@ -39,6 +39,7 @@ import {
   type TwitterOAuthConfig,
   type TwitterSession,
 } from '../utils/twitterAuth';
+import { ReportBlockPanel } from './ReportBlockPanel';
 import { ReportWorkspace } from './ReportWorkspace';
 
 type IntegrationCategory = 'ai' | 'social' | 'storage' | 'automation' | 'security' | 'analytics' | 'deployment';
@@ -90,6 +91,7 @@ const categoryIcon = { ai: BrainCircuit, social: MessageSquare, storage: Databas
 
 const initialIntegrations: Integration[] = [
   { id: 'twitter', name: 'X / Twitter', category: 'social', status: 'disconnected', description: 'Conexion OAuth 2.0 PKCE con una cuenta real de X desde la app.', features: ['OAuth 2.0 PKCE', 'users.read', 'tweet.write', 'offline.access'], freeLimit: 'Segun tu plan de X API', botsAssigned: 0, apiKey: '', showKey: false, accent: 'sky' },
+  { id: 'reportblock', name: 'Report & Block', category: 'security', status: 'connected', description: 'Detecta y bloquea spam bots en X/Twitter sin API. Chrome extension incluida.', features: ['Auto-detect spam', '1-click report', 'Auto-block', 'Sin API needed', '100% local'], freeLimit: 'Ilimitado', botsAssigned: 0, apiKey: '', showKey: false, accent: 'rose' },
   { id: 'discord', name: 'Discord', category: 'social', status: 'connected', description: 'Comunicacion operativa y notificaciones en vivo.', features: ['Webhooks', 'Channels', 'Notifications'], freeLimit: 'Sin coste base', botsAssigned: 42, apiKey: '', showKey: false, accent: 'sky' },
   { id: 'telegram', name: 'Telegram', category: 'social', status: 'disconnected', description: 'Canales, bots y control remoto ligero.', features: ['Bot API', 'Channels', 'Broadcast'], freeLimit: 'Ilimitado', botsAssigned: 0, apiKey: '', showKey: false, accent: 'cyan' },
   { id: 'huggingface', name: 'Hugging Face', category: 'ai', status: 'disconnected', description: 'Modelos abiertos para NLP, vision y tareas experimentales.', features: ['Text generation', 'Embeddings', 'Image analysis'], freeLimit: 'Tier gratuito amplio', botsAssigned: 0, apiKey: '', showKey: false, accent: 'violet' },
@@ -316,7 +318,7 @@ const IntegrationHub = () => {
                   </div>
                   {isTwitter ? (
                     twitterSession ? <button type="button" onClick={() => void disconnectTwitter()} disabled={twitterBusy} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${accent.button}`}>{twitterBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ToggleRight className="h-4 w-4" />}Desconectar</button>
-                    : <button type="button" onClick={() => void connectTwitter()} disabled={twitterBusy} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${accent.button}`}>{twitterBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}Conectar con X</button>
+                      : <button type="button" onClick={() => void connectTwitter()} disabled={twitterBusy} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${accent.button}`}>{twitterBusy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}Conectar con X</button>
                   ) : (
                     <button type="button" onClick={() => toggleGeneric(integration.id)} className={`inline-flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition ${accent.button}`}>{integration.status === 'connected' ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}{integration.status === 'connected' ? 'Desconectar' : 'Conectar'}</button>
                   )}
@@ -362,6 +364,10 @@ const IntegrationHub = () => {
                       <div className="rounded-2xl border border-white/8 bg-white/4 p-4 text-sm leading-6 text-slate-300"><p className="font-medium text-slate-100">Checklist rapido</p><p className="mt-2">1. Activa OAuth 2.0 en tu app de X.</p><p>2. Registra exactamente esta callback: {twitterConfig.redirectUri || 'pendiente'}.</p><p>3. Usa al menos users.read, tweet.read y offline.access.</p></div>
                       <div className="rounded-2xl border border-white/8 bg-white/4 p-4 text-sm leading-6 text-slate-300"><p className="font-medium text-slate-100">Referencia oficial</p><p className="mt-2">El flujo sigue la documentacion oficial de X para Authorization Code con PKCE en clientes publicos.</p><a href="https://docs.x.com/fundamentals/authentication/oauth-2-0/user-access-token" target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-cyan-100 hover:text-cyan-50">Abrir documentacion oficial<ExternalLink className="h-4 w-4" /></a></div>
                     </div>
+                  </div>
+                ) : integration.id === 'reportblock' ? (
+                  <div className="mt-5">
+                    <ReportBlockPanel />
                   </div>
                 ) : (
                   <div className="mt-5 space-y-4 rounded-[24px] border border-white/8 bg-slate-950/55 p-5">

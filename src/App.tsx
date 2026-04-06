@@ -15,14 +15,14 @@ import {
   Workflow,
 } from 'lucide-react';
 import { BotHierarchy } from './components/BotHierarchy';
+import { BottomNavBar } from './components/BottomNavBar';
 import { CommandInterface } from './components/CommandInterface';
 import { Dashboard } from './components/Dashboard';
 import { Header } from './components/Header';
 import IntegrationHub from './components/IntegrationHub';
-import { Sidebar } from './components/Sidebar';
 import { TaskManager } from './components/TaskManager';
 import { useBotStore } from './store/botStore';
-import { navigationTabs, type TabId } from './components/navigation';
+import { type TabId } from './components/navigation';
 
 const SettingsPanel = () => {
   const { groups, tasks, getStats } = useBotStore();
@@ -41,32 +41,36 @@ const SettingsPanel = () => {
 
   const systemCards = [
     {
-      title: 'Bots',
+      title: 'BOTS',
       value: stats.totalBots,
       detail: `${stats.activeBots} activos`,
       icon: Gauge,
-      gradient: 'from-cyan-400 to-blue-500',
+      border: 'border-[#00ff41]',
+      text: 'text-[#00ff41]',
     },
     {
-      title: 'Grupos',
+      title: 'GRUPOS',
       value: `${activeGroups}/${groups.length}`,
       detail: 'activos',
       icon: Workflow,
-      gradient: 'from-violet-400 to-purple-500',
+      border: 'border-[#cadeff]',
+      text: 'text-[#cadeff]',
     },
     {
-      title: 'Seguridad',
+      title: 'SEGURIDAD',
       value: 'OK',
       detail: 'Guardias activas',
       icon: ShieldCheck,
-      gradient: 'from-emerald-400 to-green-500',
+      border: 'border-[#00ff41]',
+      text: 'text-[#00ff41]',
     },
     {
-      title: 'Cola',
+      title: 'COLA',
       value: queueSize,
       detail: 'pendientes',
       icon: BellRing,
-      gradient: 'from-amber-400 to-orange-500',
+      border: 'border-[#fd8b00]',
+      text: 'text-[#fd8b00]',
     },
   ];
 
@@ -78,183 +82,218 @@ const SettingsPanel = () => {
   ];
 
   return (
-    <div className="space-y-4">
-      {/* System Status Cards */}
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {systemCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <motion.div
-              key={card.title}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`rounded-[16px] bg-gradient-to-br ${card.gradient} p-4 text-white shadow-lg`}
-            >
-              <Icon className="mb-2 h-5 w-5 text-white/70" />
-              <p className="text-2xl font-bold">{card.value}</p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.15em] text-white/70">{card.title}</p>
-              <p className="mt-0.5 text-[10px] text-white/60">{card.detail}</p>
-            </motion.div>
-          );
-        })}
-      </section>
-
-      {/* Parameters Section */}
-      <section className="rounded-[20px] bg-gradient-to-b from-slate-800/80 to-slate-900/80 p-5 backdrop-blur-xl">
-        <button
-          onClick={() => toggleSection('parameters')}
-          className="flex w-full items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 text-white">
-              <Settings className="h-5 w-5" />
+    <div className="relative min-h-screen">
+      <div className="fixed inset-0 telemetry-grid pointer-events-none"></div>
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pt-20 pb-24 md:px-8">
+        {/* Hero Section */}
+        <section className="mb-8">
+          <div className="bg-[#0c0e11] p-6 border-l-4 border-[#00ff41] relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-2 opacity-10">
+              <ShieldCheck className="h-[120px] w-[120px] text-[#00ff41]" />
             </div>
-            <p className="text-sm font-semibold text-white">Parametros</p>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 relative z-10">
+              <div className="w-full md:w-2/3">
+                <p className="text-xs font-['Space_Grotesk'] tracking-[0.2em] text-[#84967e] mb-2 uppercase">STRATEGIC COMMAND OVERVIEW</p>
+                <h2 className="text-4xl font-['Space_Grotesk'] font-bold tracking-tighter mb-4 text-[#e2e2e6] uppercase">SYSTEM INTEGRITY</h2>
+                <div className="h-4 bg-[#333538] w-full relative">
+                  <div className="h-full bg-[#00ff41] shadow-[0_0_10px_rgba(0,255,65,0.5)] w-[84%] relative">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.2)_50%,transparent_100%)] opacity-30"></div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-8 tabular-nums">
+                <div>
+                  <p className="text-[10px] text-[#84967e] mb-1">LATENCY</p>
+                  <p className="text-xl font-['Space_Grotesk'] font-medium text-[#00ff41]">12MS</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#84967e] mb-1">UPTIME</p>
+                  <p className="text-xl font-['Space_Grotesk'] font-medium">99.98%</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <motion.div
-            animate={{ rotate: expandedSections.parameters ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="text-slate-400"
-          >
-            <ChevronDown className="h-5 w-5" />
-          </motion.div>
-        </button>
+        </section>
 
-        <AnimatePresence>
-          {expandedSections.parameters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-4 overflow-hidden"
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {systemCards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <div key={card.title} className="bg-[#1a1c1f] p-5 border-l-2 relative group">
+                <div className="flex justify-between items-start mb-6">
+                  <div className={`p-2 ${card.border} bg-opacity-10`}>
+                    <Icon className={`h-5 w-5 ${card.text}`} />
+                  </div>
+                  <span className="text-[10px] font-['Space_Grotesk'] border border-[#3b4b37] px-2 py-0.5 text-[#84967e] uppercase">LIVE</span>
+                </div>
+                <p className="text-xs text-[#84967e] font-['Space_Grotesk'] tracking-widest uppercase">{card.title}</p>
+                <h3 className="text-3xl font-['Space_Grotesk'] font-extrabold tabular-nums text-[#00ff41] mb-2">{card.value}</h3>
+                <div className="flex items-center gap-2 text-[10px] text-[#00ff41]">
+                  <span>{card.detail}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Config Sections */}
+        <div className="space-y-6">
+          {/* Parameters */}
+          <section className="bg-[#1a1c1f] p-6 border-l-2 border-[#00ff41]">
+            <button
+              onClick={() => toggleSection('parameters')}
+              className="flex w-full items-center justify-between"
             >
-              <div className="grid gap-4 sm:grid-cols-2">
-                {inputs.map((input) => {
-                  const Icon = input.icon;
-                  return (
-                    <div key={input.label} className="rounded-xl bg-white/5 p-4">
-                      <div className="mb-2 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-slate-400" />
-                          <span className="text-xs text-slate-400">{input.label}</span>
+              <div className="flex items-center gap-3">
+                <Settings className="h-6 w-6 text-[#00ff41]" />
+                <h3 className="font-['Space_Grotesk'] font-bold tracking-widest uppercase text-[#00ff41]">Mission Configuration</h3>
+              </div>
+              <motion.div
+                animate={{ rotate: expandedSections.parameters ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="text-[#84967e]"
+              >
+                <ChevronDown className="h-5 w-5" />
+              </motion.div>
+            </button>
+
+            <AnimatePresence>
+              {expandedSections.parameters && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-6 overflow-hidden"
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {inputs.map((input) => {
+                      const Icon = input.icon;
+                      return (
+                        <div key={input.label} className="bg-[#0c0e11] p-4">
+                          <div className="mb-2 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Icon className="h-4 w-4 text-[#84967e]" />
+                              <span className="text-xs text-[#84967e] uppercase tracking-widest">{input.label}</span>
+                            </div>
+                            <span className="text-sm font-bold text-[#00ff41] tabular-nums">{input.defaultValue}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={input.min}
+                            max={input.max}
+                            defaultValue={input.defaultValue}
+                            className="w-full accent-[#00ff41]"
+                          />
                         </div>
-                        <span className="text-sm font-bold text-white">{input.defaultValue}</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={input.min}
-                        max={input.max}
-                        defaultValue={input.defaultValue}
-                        className="slider w-full accent-cyan-400"
-                      />
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div className="bg-[#0c0e11] p-4">
+                      <p className="mb-2 text-xs text-[#84967e] uppercase tracking-widest">Protocol</p>
+                      <select className="w-full bg-[#333538] px-3 py-3 text-sm text-[#e2e2e6] outline-none focus:border-[#00ff41] border-b-2 border-[#3b4b37] font-mono">
+                        <option value="stable" className="bg-[#1a1c1f]">Operacion estable</option>
+                        <option value="progressive" className="bg-[#1a1c1f]">Escalado progresivo</option>
+                        <option value="testing" className="bg-[#1a1c1f]">Pruebas controladas</option>
+                      </select>
                     </div>
-                  );
-                })}
-              </div>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl bg-white/5 p-4">
-                  <p className="mb-2 text-xs text-slate-400">Modo despliegue</p>
-                  <select className="w-full rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white outline-none">
-                    <option value="stable" className="bg-slate-800">Operacion estable</option>
-                    <option value="progressive" className="bg-slate-800">Escalado progresivo</option>
-                    <option value="testing" className="bg-slate-800">Pruebas controladas</option>
-                  </select>
-                </div>
-
-                <div className="rounded-xl bg-white/5 p-4">
-                  <p className="mb-2 text-xs text-slate-400">Notificaciones</p>
-                  <select className="w-full rounded-lg bg-white/5 px-3 py-2.5 text-sm text-white outline-none">
-                    <option value="critical" className="bg-slate-800">Solo criticas</option>
-                    <option value="all" className="bg-slate-800">Actividad y alertas</option>
-                    <option value="summary" className="bg-slate-800">Resumen horario</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-3">
-                <button className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:brightness-110">
-                  <Save className="h-4 w-4" />
-                  Guardar
-                </button>
-                <button className="flex items-center gap-2 rounded-xl bg-white/5 px-5 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/10 hover:text-white">
-                  <RefreshCcw className="h-4 w-4" />
-                  Restablecer
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
-
-      {/* Status & Progress Bars */}
-      <section className="rounded-[20px] bg-gradient-to-b from-slate-800/80 to-slate-900/80 p-5 backdrop-blur-xl">
-        <button
-          onClick={() => toggleSection('performance')}
-          className="flex w-full items-center justify-between"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 text-white">
-              <Activity className="h-5 w-5" />
-            </div>
-            <p className="text-sm font-semibold text-white">Estado</p>
-          </div>
-          <motion.div
-            animate={{ rotate: expandedSections.performance ? 180 : 0 }}
-            transition={{ duration: 0.2 }}
-            className="text-slate-400"
-          >
-            <ChevronDown className="h-5 w-5" />
-          </motion.div>
-        </button>
-
-        <AnimatePresence>
-          {expandedSections.performance && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-4 overflow-hidden"
-            >
-              <div className="space-y-4">
-                {[
-                  {
-                    label: 'Bots disponibles',
-                    value: `${(stats.totalBots - stats.activeBots).toLocaleString()} libres`,
-                    progress: stats.totalBots > 0 ? ((stats.totalBots - stats.activeBots) / stats.totalBots) * 100 : 0,
-                    gradient: 'from-cyan-400 to-blue-500',
-                  },
-                  {
-                    label: 'Exito',
-                    value: `${stats.successRate.toFixed(1)}%`,
-                    progress: stats.successRate,
-                    gradient: 'from-emerald-400 to-green-500',
-                  },
-                  {
-                    label: 'Carga cola',
-                    value: `${queueSize} elementos`,
-                    progress: Math.min(queueSize * 6, 100),
-                    gradient: 'from-violet-400 to-purple-500',
-                  },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-xl bg-white/5 p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs text-slate-400">{item.label}</span>
-                      <span className="text-sm font-bold text-white">{item.value}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/10">
-                      <div
-                        className={`h-2 rounded-full bg-gradient-to-r ${item.gradient}`}
-                        style={{ width: `${Math.max(item.progress, 4)}%` }}
-                      />
+                    <div className="bg-[#0c0e11] p-4">
+                      <p className="mb-2 text-xs text-[#84967e] uppercase tracking-widest">Notifications</p>
+                      <select className="w-full bg-[#333538] px-3 py-3 text-sm text-[#e2e2e6] outline-none focus:border-[#00ff41] border-b-2 border-[#3b4b37] font-mono">
+                        <option value="critical" className="bg-[#1a1c1f]">Solo criticas</option>
+                        <option value="all" className="bg-[#1a1c1f]">Actividad y alertas</option>
+                        <option value="summary" className="bg-[#1a1c1f]">Resumen horario</option>
+                      </select>
                     </div>
                   </div>
-                ))}
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    <button className="flex items-center gap-2 bg-[#00ff41] text-[#003907] px-6 py-3 text-xs font-bold tracking-widest uppercase font-['Space_Grotesk'] hover:brightness-110 active:scale-[0.98] transition-all">
+                      <Save className="h-4 w-4" />
+                      Execute Save
+                    </button>
+                    <button className="flex items-center gap-2 border border-[#84967e]/30 text-[#84967e] px-6 py-3 text-xs font-bold tracking-widest uppercase font-['Space_Grotesk'] hover:bg-[#333538] transition-all">
+                      <RefreshCcw className="h-4 w-4" />
+                      Reset
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+
+          {/* Performance */}
+          <section className="bg-[#1a1c1f] p-6 border-l-2 border-[#00ff41]/30">
+            <button
+              onClick={() => toggleSection('performance')}
+              className="flex w-full items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <Activity className="h-6 w-6 text-[#00ff41]" />
+                <h3 className="font-['Space_Grotesk'] font-bold tracking-widest uppercase text-[#00ff41]">Threat Response</h3>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
+              <motion.div
+                animate={{ rotate: expandedSections.performance ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="text-[#84967e]"
+              >
+                <ChevronDown className="h-5 w-5" />
+              </motion.div>
+            </button>
+
+            <AnimatePresence>
+              {expandedSections.performance && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mt-6 overflow-hidden"
+                >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    {[
+                      {
+                        label: 'AUTO-RESPONSE',
+                        value: `${(stats.totalBots - stats.activeBots).toLocaleString()} libres`,
+                        progress: stats.totalBots > 0 ? ((stats.totalBots - stats.activeBots) / stats.totalBots) * 100 : 0,
+                        border: 'border-[#00ff41]',
+                        text: 'text-[#00ff41]',
+                      },
+                      {
+                        label: 'SUCCESS RATE',
+                        value: `${stats.successRate.toFixed(1)}%`,
+                        progress: stats.successRate,
+                        border: 'border-[#00ff41]',
+                        text: 'text-[#00ff41]',
+                      },
+                      {
+                        label: 'FIREWALL',
+                        value: `${queueSize} elementos`,
+                        progress: Math.min(queueSize * 6, 100),
+                        border: 'border-[#fd8b00]',
+                        text: 'text-[#fd8b00]',
+                      },
+                    ].map((item) => (
+                      <div key={item.label} className={`bg-[#0c0e11] p-4 border-l ${item.border}`}>
+                        <p className="text-[10px] text-[#84967e] mb-1 uppercase tracking-widest">{item.label}</p>
+                        <p className={`text-sm font-bold uppercase ${item.text}`}>{item.value}</p>
+                        <div className="h-1 bg-[#333538] mt-2">
+                          <div
+                            className={`h-1 bg-[#00ff41]`}
+                            style={{ width: `${Math.max(item.progress, 4)}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+        </div>
+      </div>
     </div>
   );
 };
@@ -307,61 +346,28 @@ function App() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-16 top-6 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
-        <div className="absolute bottom-[-8rem] left-1/3 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
-        <div className="surface-grid absolute inset-0 opacity-40" />
-      </div>
+    <div className="relative min-h-screen overflow-hidden bg-[#111316]">
+      <div className="pointer-events-none fixed inset-0 telemetry-grid opacity-50"></div>
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-[1680px] flex-col px-4 py-4 sm:px-6 lg:px-8">
+      <div className="relative">
         <Header activeTab={activeTab} setActiveTab={setActiveTab} />
 
-        <div className="mt-4 flex flex-1 flex-col gap-4 xl:flex-row">
-          <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-
-          <main className="min-w-0 flex-1">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
-                {renderContent()}
-              </motion.div>
-            </AnimatePresence>
-          </main>
-        </div>
+        <main className="pt-16">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </main>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/8 bg-[rgba(6,10,18,0.92)] p-3 backdrop-blur xl:hidden">
-        <div className="mx-auto grid max-w-3xl grid-cols-4 gap-2">
-          {navigationTabs.slice(0, 4).map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`rounded-xl px-3 py-3 text-center transition ${isActive
-                    ? 'bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-md'
-                    : 'bg-white/5 text-slate-400'
-                  }`}
-              >
-                <div className="flex flex-col items-center gap-1.5">
-                  <Icon className="h-5 w-5" />
-                  <span className="text-[10px] font-medium">{tab.label}</span>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <BottomNavBar activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   );
 }
